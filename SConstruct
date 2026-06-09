@@ -18,8 +18,8 @@ from SCons.Builder import ListEmitter
 
 # Explicitly resolve the helper modules, this is done to avoid clash with
 # modules of the same name that might be randomly added (e.g. someone adding
-# an `editor.py` file at the root of the module creates a clash with the editor
-# folder when doing `import editor.template_builder`)
+# an `brxforge.py` file at the root of the module creates a clash with the editor
+# folder when doing `import brxforge.template_builder`)
 
 
 def _helper_module(name, path):
@@ -49,8 +49,8 @@ _helper_module("glsl_builders", "glsl_builders.py")
 _helper_module("methods", "methods.py")
 _helper_module("platform_methods", "platform_methods.py")
 _helper_module("version", "version.py")
-_helper_module("core.core_builders", "core/core_builders.py")
-_helper_module("main.main_builders", "main/main_builders.py")
+_helper_module("brxkernel.core_builders", "brxkernel/core_builders.py")
+_helper_module("brxorchestrator.main_builders", "brxorchestrator/main_builders.py")
 _helper_module("misc.utility.color", "misc/utility/color.py")
 
 # Local
@@ -62,8 +62,8 @@ from misc.utility.color import is_stderr_color, print_error, print_info, print_w
 from platform_methods import architecture_aliases, architectures, compatibility_platform_aliases
 
 if ARGUMENTS.get("target", "editor") == "editor":
-    _helper_module("editor.editor_builders", "editor/editor_builders.py")
-    _helper_module("editor.template_builders", "editor/template_builders.py")
+    _helper_module("brxforge.editor_builders", "brxforge/editor_builders.py")
+    _helper_module("brxforge.template_builders", "brxforge/template_builders.py")
 
 # Scan possible build platforms
 
@@ -277,9 +277,9 @@ opts.Add(
     )
 )
 opts.Add("build_profile", "Path to a file containing a feature build profile", "")
-opts.Add("custom_modules", "A list of comma-separated directory paths containing custom modules to build.", "")
-opts.Add(BoolVariable("custom_modules_recursive", "Detect custom modules recursively for each specified path.", True))
-opts.Add(BoolVariable("modules_enabled_by_default", "If no, disable all modules except ones explicitly enabled", True))
+opts.Add("custom_brxextensions", "A list of comma-separated directory paths containing custom modules to build.", "")
+opts.Add(BoolVariable("custom_brxextensions_recursive", "Detect custom modules recursively for each specified path.", True))
+opts.Add(BoolVariable("brxextensions_enabled_by_default", "If no, disable all modules except ones explicitly enabled", True))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", True))
 opts.Add(
     "system_certs_path",
@@ -366,7 +366,7 @@ opts.Add("c_compiler_launcher", "C compiler launcher (e.g. `ccache`)")
 opts.Add("cpp_compiler_launcher", "C++ compiler launcher (e.g. `ccache`)")
 
 # Update the environment to have all above options defined
-# in following code (especially platform and custom_modules).
+# in following code (especially platform and custom_brxextensions).
 opts.Update(env)
 
 # Setup caching logic early to catch everything.
@@ -443,11 +443,11 @@ opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
 modules_detected = OrderedDict()
 module_search_paths = ["modules"]  # Built-in path.
 
-if env["custom_modules"]:
-    paths = env["custom_modules"].split(",")
+if env["custom_brxextensions"]:
+    paths = env["custom_brxextensions"].split(",")
     for p in paths:
         try:
-            module_search_paths.append(methods.convert_custom_modules_path(p))
+            module_search_paths.append(methods.convert_custom_brxextensions_path(p))
         except ValueError as e:
             print_error(e)
             Exit(255)
@@ -458,10 +458,10 @@ for path in module_search_paths:
         # so save the time it takes to parse directories.
         modules = methods.detect_modules(path, recursive=False)
     else:  # Custom.
-        modules = methods.detect_modules(path, env["custom_modules_recursive"])
+        modules = methods.detect_modules(path, env["custom_brxextensions_recursive"])
         # Provide default include path for both the custom module search `path`
         # and the base directory containing custom modules, as it may be different
-        # from the built-in "modules" name (e.g. "custom_modules/summator/summator.h"),
+        # from the built-in "modules" name (e.g. "custom_brxextensions/summator/summator.h"),
         # so it can be referenced simply as `#include "summator/summator.h"`
         # independently of where a module is located on user's filesystem.
         env.Prepend(CPPPATH=[path, os.path.dirname(path)])
@@ -473,7 +473,7 @@ for name, path in modules_detected.items():
     sys.path.insert(0, path)
     import config
 
-    if env["modules_enabled_by_default"]:
+    if env["brxextensions_enabled_by_default"]:
         enabled = True
         try:
             enabled = config.is_enabled()
@@ -584,7 +584,7 @@ if env.editor_build:
     if env["engine_update_check"]:
         env.Append(CPPDEFINES=["ENGINE_UPDATE_CHECK_ENABLED"])
 
-    if not env.File("#main/splash_editor.png").exists():
+    if not env.File("#brxorchestrator/splash_brxforge.png").exists():
         # Force disabling editor splash if missing.
         env["no_editor_splash"] = True
     if env["no_editor_splash"]:
@@ -1226,18 +1226,18 @@ if "cpp_compiler_launcher" in env:
 # Build subdirs, the build order is dependent on link order.
 Export("env")
 
-SConscript("core/SCsub")
-SConscript("servers/SCsub")
-SConscript("scene/SCsub")
+SConscript("brxkernel/SCsub")
+SConscript("brxservices/SCsub")
+SConscript("brxreality/SCsub")
 if env.editor_build:
-    SConscript("editor/SCsub")
-SConscript("drivers/SCsub")
+    SConscript("brxforge/SCsub")
+SConscript("brxadapters/SCsub")
 
 SConscript("platform/SCsub")
-SConscript("modules/SCsub")
+SConscript("brxextensions/SCsub")
 if env["tests"]:
     SConscript("tests/SCsub")
-SConscript("main/SCsub")
+SConscript("brxorchestrator/SCsub")
 
 SConscript("platform/" + env["platform"] + "/SCsub")  # Build selected platform.
 

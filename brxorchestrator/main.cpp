@@ -59,59 +59,59 @@
 #include "core/string/translation_server.h"
 #include "core/variant/variant_parser.h"
 #include "core/version.h"
-#include "drivers/register_driver_types.h"
+#include "brxadapters/register_driver_types.h"
 #include "main/app_icon.gen.h"
 #include "main/main_timer_sync.h"
 #include "main/performance.h"
 #include "main/splash.gen.h"
-#include "scene/main/scene_tree.h"
-#include "scene/main/window.h"
-#include "scene/property_list_helper.h"
-#include "scene/register_scene_types.h"
-#include "scene/resources/packed_scene.h"
-#include "scene/theme/theme_db.h"
-#include "servers/audio/audio_driver_dummy.h"
-#include "servers/audio/audio_server.h"
-#include "servers/camera/camera_server.h"
-#include "servers/display/accessibility_server.h"
-#include "servers/display/display_server.h"
-#include "servers/movie_writer/movie_writer.h"
-#include "servers/register_server_types.h"
-#include "servers/rendering/rendering_device.h"
-#include "servers/rendering/rendering_server.h"
-#include "servers/rendering/rendering_server_default.h"
-#include "servers/text/text_server.h"
-#include "servers/text/text_server_dummy.h"
+#include "brxreality/main/scene_tree.h"
+#include "brxreality/main/window.h"
+#include "brxreality/property_list_helper.h"
+#include "brxreality/register_scene_types.h"
+#include "brxreality/resources/packed_scene.h"
+#include "brxreality/theme/theme_db.h"
+#include "brxservices/audio/audio_driver_dummy.h"
+#include "brxservices/audio/audio_server.h"
+#include "brxservices/camera/camera_server.h"
+#include "brxservices/display/accessibility_server.h"
+#include "brxservices/display/display_server.h"
+#include "brxservices/movie_writer/movie_writer.h"
+#include "brxservices/register_server_types.h"
+#include "brxservices/rendering/rendering_device.h"
+#include "brxservices/rendering/rendering_server.h"
+#include "brxservices/rendering/rendering_server_default.h"
+#include "brxservices/text/text_server.h"
+#include "brxservices/text/text_server_dummy.h"
 
 #include "modules/register_module_types.h"
 #include "platform/register_platform_apis.h"
 
 // 2D
 #ifndef NAVIGATION_2D_DISABLED
-#include "servers/navigation_2d/navigation_server_2d.h"
+#include "brxservices/navigation_2d/navigation_server_2d.h"
 #endif // NAVIGATION_2D_DISABLED
 
 #ifndef PHYSICS_2D_DISABLED
-#include "servers/physics_2d/physics_server_2d.h"
-#include "servers/physics_2d/physics_server_2d_dummy.h"
+#include "brxservices/physics_2d/physics_server_2d.h"
+#include "brxservices/physics_2d/physics_server_2d_dummy.h"
 #endif // PHYSICS_2D_DISABLED
 
 // 3D
 #ifndef NAVIGATION_3D_DISABLED
-#include "servers/navigation_3d/navigation_server_3d.h"
+#include "brxservices/navigation_3d/navigation_server_3d.h"
 #endif // NAVIGATION_3D_DISABLED
 
 #ifndef PHYSICS_3D_DISABLED
-#include "servers/physics_3d/physics_server_3d.h"
-#include "servers/physics_3d/physics_server_3d_dummy.h"
+#include "brxservices/physics_3d/physics_server_3d.h"
+#include "brxservices/physics_3d/physics_server_3d_dummy.h"
 #endif // PHYSICS_3D_DISABLED
 
 #ifndef XR_DISABLED
-#include "servers/xr/xr_server.h"
+#include "brxservices/xr/xr_server.h"
 #endif // XR_DISABLED
 
 #ifdef TESTS_ENABLED
-#include "servers/rendering/dummy/rasterizer_dummy.h"
+#include "brxservices/rendering/dummy/rasterizer_dummy.h"
 #include "tests/test_main.h"
 #endif
 

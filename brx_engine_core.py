@@ -1,13 +1,9 @@
-import sys
-import math
-import time
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
 class Vector3:
-    """Classe para representar vetores 3D e operações básicas."""
     def __init__(self, x=0.0, y=0.0, z=0.0):
         self.x = x
         self.y = y
@@ -22,8 +18,11 @@ class Vector3:
     def __mul__(self, scalar):
         return Vector3(self.x * scalar, self.y * scalar, self.z * scalar)
 
+    def __truediv__(self, scalar):
+        return Vector3(self.x / scalar, self.y / scalar, self.z / scalar)
+
     def length(self):
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
+        return (self.x**2 + self.y**2 + self.z**2)**0.5
 
     def normalize(self):
         l = self.length()
@@ -31,9 +30,9 @@ class Vector3:
             return Vector3(self.x / l, self.y / l, self.z / l)
         return Vector3()
 
-class Node:
+class BRXNode:
     """Classe base para todos os objetos na árvore de cena."""
-    def __init__(self, name="Node"):
+    def __init__(self, name="BRXNode"):
         self.name = name
         self.parent = None
         self.children = []
@@ -42,173 +41,157 @@ class Node:
         self.scale = Vector3(1.0, 1.0, 1.0)
 
     def add_child(self, child):
-        child.parent = self
         self.children.append(child)
+        child.parent = self
 
-    def update(self, delta_time):
-        for child in self.children:
-            child.update(delta_time)
+    def remove_child(self, child):
+        self.children.remove(child)
+        child.parent = None
 
-    def render(self):
+    def _update(self, delta_time):
+        pass
+
+    def _on_render(self):
+        pass
+
+class BRXSpatialNode(BRXNode):
+    """Nó para objetos com transformações 3D."""
+    def __init__(self, name="BRXSpatial"):
+        super().__init__(name)
+
+    def _on_render(self):
         glPushMatrix()
         glTranslatef(self.position.x, self.position.y, self.position.z)
         glRotatef(self.rotation.x, 1, 0, 0)
         glRotatef(self.rotation.y, 0, 1, 0)
         glRotatef(self.rotation.z, 0, 0, 1)
         glScalef(self.scale.x, self.scale.y, self.scale.z)
-        
-        self._on_render()
-        
+        super()._on_render()
         for child in self.children:
-            child.render()
+            child._on_render()
         glPopMatrix()
 
-    def _on_render(self):
-        pass
-
-class SpatialNode(Node):
-    """Nó para objetos com transformações 3D."""
-    def __init__(self, name="Spatial"):
-        super().__init__(name)
-
-class Camera(SpatialNode):
+class BRXCamera(BRXSpatialNode):
     """Câmera para visualização 3D."""
-    def __init__(self, name="Camera"):
+    def __init__(self, name="BRXCamera"):
         super().__init__(name)
         self.fov = 45.0
-        self.aspect = 800 / 600
+        self.aspect = 800 / 600  # Será atualizado no loop principal
         self.near = 0.1
         self.far = 100.0
 
-    def apply(self):
+    def _on_render(self):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(self.fov, self.aspect, self.near, self.far)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        # A câmera em OpenGL é o inverso da transformação do objeto
         glRotatef(-self.rotation.x, 1, 0, 0)
         glRotatef(-self.rotation.y, 0, 1, 0)
         glRotatef(-self.rotation.z, 0, 0, 1)
         glTranslatef(-self.position.x, -self.position.y, -self.position.z)
 
-class Cube(SpatialNode):
+class BRXCube(BRXSpatialNode):
     """Um simples cubo 3D para teste."""
     def _on_render(self):
         glBegin(GL_QUADS)
         # Frente
-        glColor3f(1, 0, 0)
-        glVertex3f(-0.5, -0.5, 0.5)
-        glVertex3f(0.5, -0.5, 0.5)
+        glColor3f(1.0, 0.0, 0.0)
         glVertex3f(0.5, 0.5, 0.5)
         glVertex3f(-0.5, 0.5, 0.5)
+        glVertex3f(-0.5, -0.5, 0.5)
+        glVertex3f(0.5, -0.5, 0.5)
         # Trás
-        glColor3f(0, 1, 0)
-        glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(-0.5, 0.5, -0.5)
+        glColor3f(0.0, 1.0, 0.0)
         glVertex3f(0.5, 0.5, -0.5)
+        glVertex3f(-0.5, 0.5, -0.5)
+        glVertex3f(-0.5, -0.5, -0.5)
         glVertex3f(0.5, -0.5, -0.5)
         # Cima
-        glColor3f(0, 0, 1)
+        glColor3f(0.0, 0.0, 1.0)
+        glVertex3f(0.5, 0.5, -0.5)
         glVertex3f(-0.5, 0.5, -0.5)
         glVertex3f(-0.5, 0.5, 0.5)
         glVertex3f(0.5, 0.5, 0.5)
-        glVertex3f(0.5, 0.5, -0.5)
         # Baixo
-        glColor3f(1, 1, 0)
+        glColor3f(1.0, 1.0, 0.0)
+        glVertex3f(0.5, -0.5, -0.5)
         glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(0.5, -0.5, -0.5)
-        glVertex3f(0.5, -0.5, 0.5)
         glVertex3f(-0.5, -0.5, 0.5)
+        glVertex3f(0.5, -0.5, 0.5)
         # Direita
-        glColor3f(1, 0, 1)
-        glVertex3f(0.5, -0.5, -0.5)
+        glColor3f(0.0, 1.0, 1.0)
         glVertex3f(0.5, 0.5, -0.5)
         glVertex3f(0.5, 0.5, 0.5)
         glVertex3f(0.5, -0.5, 0.5)
+        glVertex3f(0.5, -0.5, -0.5)
         # Esquerda
-        glColor3f(0, 1, 1)
-        glVertex3f(-0.5, -0.5, -0.5)
-        glVertex3f(-0.5, -0.5, 0.5)
-        glVertex3f(-0.5, 0.5, 0.5)
+        glColor3f(1.0, 0.0, 1.0)
         glVertex3f(-0.5, 0.5, -0.5)
+        glVertex3f(-0.5, 0.5, 0.5)
+        glVertex3f(-0.5, -0.5, 0.5)
+        glVertex3f(-0.5, -0.5, -0.5)
         glEnd()
 
-class BRXEngine:
+class BRXOrchestrator:
     """Classe principal da BRX Engine."""
     def __init__(self, width=800, height=600, title="BRX Engine"):
         pygame.init()
         self.width = width
         self.height = height
-        self.screen = pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL)
+        self.screen = pygame.display.set_mode((self.width, self.height), DOUBLEBUF | OPENGL)
         pygame.display.set_caption(title)
         
         glEnable(GL_DEPTH_TEST)
         
-        self.root = Node("Root")
-        self.camera = Camera("MainCamera")
+        self.root = BRXNode("Root")
+        self.camera = BRXCamera("MainCamera")
         self.camera.position.z = 5.0
         self.root.add_child(self.camera)
         
         self.running = True
-        self.clock = pygame.time.Clock()
 
     def run(self):
         while self.running:
-            delta_time = self.clock.tick(60) / 1000.0
-            
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == QUIT:
                     self.running = False
-            
-            # Input básico para mover a câmera (WASD + QE para cima/baixo)
-            keys = pygame.key.get_pressed()
-            speed = 5.0 * delta_time
-            if keys[K_w]: self.camera.position.z -= speed
-            if keys[K_s]: self.camera.position.z += speed
-            if keys[K_a]: self.camera.position.x -= speed
-            if keys[K_d]: self.camera.position.x += speed
-            if keys[K_q]: self.camera.position.y += speed
-            if keys[K_e]: self.camera.position.y -= speed
-            
-            # Rotação da câmera com setas
-            rot_speed = 50.0 * delta_time
-            if keys[K_LEFT]: self.camera.rotation.y -= rot_speed
-            if keys[K_RIGHT]: self.camera.rotation.y += rot_speed
-            if keys[K_UP]: self.camera.rotation.x -= rot_speed
-            if keys[K_DOWN]: self.camera.rotation.x += rot_speed
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        self.running = False
 
-            self.root.update(delta_time)
-            
+            # Lógica de atualização (ex: mover câmera, objetos)
+            # self.root._update(delta_time)
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            self.camera.apply()
-            self.root.render()
             
+            self.camera._on_render() # Configura a visão da câmera
+            
+            # Renderiza a cena a partir do nó raiz
+            for child in self.root.children:
+                child._on_render()
+
             pygame.display.flip()
+            pygame.time.wait(10)
         
         pygame.quit()
 
 if __name__ == "__main__":
-    engine = BRXEngine()
+    engine = BRXOrchestrator()
     
     # Adicionar alguns cubos para testar a perspectiva 3D
-    cube1 = Cube("Cube1")
+    cube1 = BRXCube("Cube1")
     cube1.position.x = -1.5
     engine.root.add_child(cube1)
     
-    cube2 = Cube("Cube2")
+    cube2 = BRXCube("Cube2")
     cube2.position.x = 1.5
     cube2.rotation.y = 45
     engine.root.add_child(cube2)
     
-    cube3 = Cube("Cube3")
+    cube3 = BRXCube("Cube3")
     cube3.position.y = 2.0
     cube3.scale = Vector3(0.5, 0.5, 0.5)
     engine.root.add_child(cube3)
     
-    print("Iniciando BRX Engine...")
-    print("Controles:")
-    print("  WASD: Mover Câmera (Frente, Trás, Esquerda, Direita)")
-    print("  QE: Mover Câmera (Cima, Baixo)")
-    print("  Setas: Rotacionar Câmera")
     engine.run()
