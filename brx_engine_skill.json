@@ -1,0 +1,20 @@
+{
+  "name": "brx_engine_developer",
+  "description": "Skill especializada para desenvolver e modificar a BRX Engine (baseada na Godot Engine) com foco em jogos 3D e otimização para hardware legado.",
+  "commands": {
+    "explore": "python3 /home/ubuntu/godot_explorer.py list_module /home/ubuntu/godot_source/{module}",
+    "find_class": "python3 /home/ubuntu/godot_explorer.py find_class /home/ubuntu/godot_source {class_name}",
+    "build": "cd /home/ubuntu/godot_source && scons platform=linuxbsd target=editor dev_build=yes",
+    "optimize_legacy": "python3 /home/ubuntu/brx_optimizer.py --legacy-gpu"
+  },
+  "context_files": [
+    "/home/ubuntu/ia_bridge_godot.md",
+    "/home/ubuntu/brx_engine_architecture.md"
+  ],
+  "guidelines": [
+    "Priorizar suporte a OpenGL 2.1/3.0 para Intel HD Graphics 3000.",
+    "Focar em eixos 3D completos (X, Y, Z) e perspectiva de todos os lados.",
+    "Manter a modularidade da arquitetura Godot (Nodes, Servers, Resources).",
+    "Documentar todas as alterações feitas no código-fonte original da Godot."
+  ]
+}
